@@ -8,6 +8,6 @@
 
 **Danery Alfredo Ascencio Saravia – SMSS057624**
 
-**Daniel Antonio Orellana Zelaya – SMSS086223**
+**Samuel Alejandro Batres Caceres – SMSS057424**
 
 **Andrea Yamileth Rodríguez Hernández – SMSS073124**
