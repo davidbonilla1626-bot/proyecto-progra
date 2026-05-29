@@ -79,7 +79,7 @@ class ProductController extends Controller
             'price' => $validated['price'],
             'category_id' => $validated['category_id'],
             'image' => $imagePath,
-            'image_path' => $imagePath
+            
         ]);
 
         return redirect()->route('products.index')->with('message', '¡Producto creado con éxito!');
@@ -144,7 +144,7 @@ class ProductController extends Controller
             'price' => $validated['price'],
             'category_id' => $validated['category_id'],
             'image' => $imagePath,
-            'image_path' => $imagePath
+
         ]);
 
         return redirect()->route('products.index')->with('message', '¡Producto actualizado con éxito!');
