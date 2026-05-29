@@ -14,7 +14,7 @@ defineProps({
 const form = useForm({
     email: '',
     password: '',
-    remember: false,
+    remember: true,
 });
 
 const submit = () => {
@@ -25,7 +25,7 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Log in" />
+    <Head title="Iniciar Sesión | QuickBite Express" />
 
     <div class="bg-[#f8f9fa] text-[#191c1d] min-h-screen font-['Be_Vietnam_Pro'] pb-20 relative">
         <!-- HEADER PÚBLICO -->
@@ -36,9 +36,9 @@ const submit = () => {
             <!-- HEADER DEL FORMULARIO -->
             <div class="text-center mb-8">
                 <h1 class="text-4xl md:text-5xl font-black text-[#b7102a] italic tracking-tighter uppercase font-['Epilogue'] leading-none">
-                    JOIN THE EXPRESS
+                    INICIA SESIÓN
                 </h1>
-                <p class="text-slate-500 font-medium mt-2">High-velocity flavor is just a click away.</p>
+                <p class="text-slate-500 font-medium mt-2">¡El sabor a alta velocidad está a un clic!</p>
             </div>
 
             <!-- TARJETA DE LOGIN -->
@@ -47,33 +47,16 @@ const submit = () => {
                 <!-- TABS -->
                 <div class="flex border-b-2 border-slate-900">
                     <div class="w-1/2 bg-[#ffcc00] border-r-2 border-slate-900 py-4 text-center font-black text-lg text-slate-900 cursor-pointer">
-                        Login
+                        Ingresar
                     </div>
-                    <div class="w-1/2 bg-white py-4 text-center font-bold text-lg text-slate-400 cursor-pointer hover:bg-slate-50 transition-colors">
-                        Sign Up
-                    </div>
+                    <Link :href="route('register')" class="w-1/2 bg-white py-4 text-center font-bold text-lg text-slate-400 cursor-pointer hover:bg-slate-50 transition-colors block">
+                        Registrarse
+                    </Link>
                 </div>
 
                 <div class="p-8">
-                    <!-- SOCIAL BUTTONS (Ejemplo estético) -->
-                    <div class="space-y-3 mb-8">
-                        <button type="button" class="w-full flex items-center justify-center gap-2 border-2 border-slate-300 rounded-xl py-3 font-bold text-sm text-slate-700 hover:bg-slate-50 transition-colors hover:border-slate-400">
-                            <span class="text-[#EA4335] font-black text-lg">G</span> Continue with Google
-                        </button>
-                        
-                        <button type="button" class="w-full flex items-center justify-center gap-2 border-2 border-[#1877F2] bg-[#1877F2] rounded-xl py-3 font-bold text-sm text-white hover:bg-[#166fe5] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
-                            <span class="font-black text-white text-lg">f</span> Continue with Facebook
-                        </button>
-                    </div>
-
-                    <!-- DIVIDER -->
-                    <div class="relative flex py-5 items-center">
-                        <div class="flex-grow border-t border-slate-200"></div>
-                        <span class="flex-shrink-0 mx-4 text-[10px] font-black tracking-widest text-slate-400 uppercase">Or Email</span>
-                        <div class="flex-grow border-t border-slate-200"></div>
-                    </div>
-
-                    <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
+                    <!-- MENSAJE DE ESTADO (Por ejemplo, recuperación de contraseña) -->
+                    <div v-if="status" class="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-xl text-green-700 text-sm font-bold animate-fadeIn">
                         {{ status }}
                     </div>
 
@@ -81,16 +64,16 @@ const submit = () => {
                         
                         <!-- EMAIL -->
                         <div>
-                            <label for="email" class="block text-xs font-black uppercase tracking-widest text-slate-600 mb-2">Email Address</label>
+                            <label for="email" class="block text-xs font-black uppercase tracking-widest text-slate-600 mb-2">Correo Electrónico</label>
                             <input
                                 id="email"
                                 type="email"
-                                class="w-full rounded-xl border-2 border-slate-200 focus:border-slate-900 focus:ring-0 transition-colors px-4 py-3 text-sm outline-none text-slate-900"
+                                class="w-full rounded-xl border-2 border-slate-900 focus:border-red-700 focus:ring-0 transition-colors px-4 py-3 text-sm font-bold outline-none text-slate-900"
                                 v-model="form.email"
                                 required
                                 autofocus
                                 autocomplete="username"
-                                placeholder="speedy@quickbite.com"
+                                placeholder="tu@correo.com"
                             />
                             <p v-if="form.errors.email" class="text-red-500 text-xs mt-1 font-bold">{{ form.errors.email }}</p>
                         </div>
@@ -98,13 +81,13 @@ const submit = () => {
                         <!-- PASSWORD -->
                         <div>
                             <div class="flex justify-between items-center mb-2">
-                                <label for="password" class="block text-xs font-black uppercase tracking-widest text-slate-600">Password</label>
+                                <label for="password" class="block text-xs font-black uppercase tracking-widest text-slate-600">Contraseña</label>
                                 <Link
                                     v-if="canResetPassword"
                                     :href="route('password.request')"
                                     class="text-xs font-bold text-[#b7102a] hover:underline"
                                 >
-                                    Forgot?
+                                    ¿La olvidaste?
                                 </Link>
                             </div>
                             
@@ -112,24 +95,26 @@ const submit = () => {
                                 <input
                                     id="password"
                                     type="password"
-                                    class="w-full rounded-xl border-2 border-slate-200 focus:border-slate-900 focus:ring-0 transition-colors px-4 py-3 text-sm outline-none text-slate-900"
+                                    class="w-full rounded-xl border-2 border-slate-900 focus:border-red-700 focus:ring-0 transition-colors px-4 py-3 text-sm font-bold outline-none text-slate-900"
                                     v-model="form.password"
                                     required
                                     autocomplete="current-password"
                                     placeholder="••••••••"
                                 />
-                                <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                    <span class="material-symbols-outlined text-[20px]">visibility</span>
-                                </button>
                             </div>
                             <p v-if="form.errors.password" class="text-red-500 text-xs mt-1 font-bold">{{ form.errors.password }}</p>
                         </div>
 
-                        <!-- REMEMBER ME (Oculto visualmente en el mockup, se asume true o se ignora en UI) -->
-                        <div class="hidden">
-                            <label class="flex items-center">
-                                <input type="checkbox" name="remember" v-model="form.remember" />
-                                <span>Remember me</span>
+                        <!-- REMEMBER ME -->
+                        <div class="flex items-center">
+                            <input 
+                                type="checkbox" 
+                                id="remember" 
+                                v-model="form.remember" 
+                                class="rounded border-slate-900 text-red-700 focus:ring-red-500 size-4 cursor-pointer"
+                            />
+                            <label for="remember" class="ml-2 text-xs font-bold text-slate-600 uppercase tracking-widest cursor-pointer select-none">
+                                Recordar sesión
                             </label>
                         </div>
 
@@ -139,9 +124,9 @@ const submit = () => {
                                 type="submit"
                                 :class="{ 'opacity-50 cursor-not-allowed': form.processing }"
                                 :disabled="form.processing"
-                                class="w-full bg-[#b7102a] text-white border-2 border-slate-900 rounded-xl py-4 text-xl italic font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all font-['Epilogue']"
+                                class="w-full bg-[#b7102a] hover:bg-red-800 text-white border-2 border-slate-900 rounded-xl py-4 text-xl italic font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all font-['Epilogue'] cursor-pointer"
                             >
-                                LET'S EAT!
+                                ¡A COMER!
                             </button>
                         </div>
                     </form>
@@ -150,9 +135,9 @@ const submit = () => {
                 <!-- FOOTER -->
                 <div class="bg-slate-50 border-t-2 border-slate-900 p-5 text-center">
                     <p class="text-[10px] text-slate-500 font-medium">
-                        By logging in, you agree to our 
-                        <a href="#" class="text-[#b7102a] hover:underline">Terms of Service</a> and 
-                        <a href="#" class="text-[#b7102a] hover:underline">Privacy Policy</a>.
+                        Al iniciar sesión, aceptas nuestros 
+                        <a href="#" class="text-[#b7102a] hover:underline font-bold">Términos de Servicio</a> y 
+                        <a href="#" class="text-[#b7102a] hover:underline font-bold">Política de Privacidad</a>.
                     </p>
                 </div>
             </div>

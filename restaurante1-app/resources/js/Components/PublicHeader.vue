@@ -7,83 +7,107 @@ const { cartCount } = useCart();
 </script>
 
 <template>
-    <!-- BARRA DE NAVEGACIÓN SUPERIOR (Reutilizable para el Menú y Checkout) -->
+    <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
     <nav class="sticky top-0 z-50 bg-white border-b-4 border-slate-900 px-6 py-4 shadow-sm">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <!-- LOGO: Al hacer clic lleva al Menú -->
+            <!-- LOGO -->
             <Link :href="route('public.menu')" class="text-2xl md:text-3xl font-black text-red-700 italic tracking-tighter uppercase font-['Epilogue'] hover:scale-105 transition-transform origin-left">
                 QuickBite Express
             </Link>
 
-            <!-- ENLACES CENTRALES (Ocultos en móviles, visibles en pantallas grandes) -->
-            <div class="hidden md:flex items-center gap-8 font-black text-slate-800 text-[16px] tracking-wide font-['Epilogue']">
-                <!-- El enlace de menú se pone en rojo si estamos en la vista de menú -->
+            <!-- ENLACES CENTRALES -->
+            <div class="hidden md:flex items-center gap-8 font-black text-slate-800 text-[14px] tracking-widest uppercase font-['Epilogue']">
                 <Link 
                     :href="route('public.menu')" 
                     :class="[
-                        'pb-1 transition-all',
+                        'pb-1 transition-all border-b-2',
                         route().current('public.menu') 
-                            ? 'text-red-700 border-b-2 border-red-700' 
-                            : 'border-b-2 border-transparent hover:text-red-700 hover:border-slate-200'
+                            ? 'text-red-700 border-red-700' 
+                            : 'border-transparent hover:text-red-700 hover:border-slate-200'
                     ]"
                 >
-                    Menu
+                    Menú
                 </Link>
                 <Link 
+                    v-if="$page.props.auth && $page.props.auth.user"
                     :href="route('public.orders')" 
                     :class="[
-                        'pb-1 transition-all',
+                        'pb-1 transition-all border-b-2',
                         route().current('public.orders') 
-                            ? 'text-red-700 border-b-2 border-red-700' 
-                            : 'border-b-2 border-transparent hover:text-red-700 hover:border-slate-200'
+                            ? 'text-red-700 border-red-700' 
+                            : 'border-transparent hover:text-red-700 hover:border-slate-200'
                     ]"
                 >
-                    Orders
+                    Mis Pedidos
                 </Link>
                 <Link 
                     :href="route('public.about')" 
                     :class="[
-                        'pb-1 transition-all',
+                        'pb-1 transition-all border-b-2',
                         route().current('public.about') 
-                            ? 'text-red-700 border-b-2 border-red-700' 
-                            : 'border-b-2 border-transparent hover:text-red-700 hover:border-slate-200'
+                            ? 'text-red-700 border-red-700' 
+                            : 'border-transparent hover:text-red-700 hover:border-slate-200'
                     ]"
                 >
-                    About
+                    Nosotros
                 </Link>
             </div>
 
-            <!-- BOTONES DERECHOS (Carrito y Login) -->
+            <!-- BOTONES DERECHOS -->
             <div class="flex items-center gap-6">
                 
                 <!-- ICONO DEL CARRITO -->
-                <Link :href="route('public.cart') || '#'" class="relative flex items-center p-2 text-slate-600 hover:text-slate-900 transition-colors">
-                    <span class="material-symbols-outlined text-3xl">shopping_cart</span>
-                    <!-- Notificación roja (Badge) con la cantidad de productos -->
+                <Link :href="route('public.cart')" class="relative flex items-center p-2 text-slate-600 hover:text-slate-900 transition-colors">
+                    <span class="material-symbols-outlined text-3xl font-bold">shopping_cart</span>
                     <span 
                         v-if="cartCount > 0" 
-                        class="absolute top-0 -right-1 bg-red-700 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border border-white"
+                        class="absolute top-0 -right-1 bg-red-700 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-slate-900"
                     >
                         {{ cartCount }}
                     </span>
                 </Link>
 
-                <!-- BOTÓN DE LOGIN / DASHBOARD -->
-                <Link 
-                    v-if="$page.props.auth && $page.props.auth.user" 
-                    :href="route('dashboard')" 
-                    class="bg-red-700 text-white px-6 py-2.5 rounded-2xl font-black uppercase text-sm tracking-widest border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
-                >
-                    Dashboard
-                </Link>
-                <Link 
-                    v-else 
-                    :href="route('login')" 
-                    class="bg-red-700 text-white px-6 py-2.5 rounded-2xl font-black uppercase text-sm tracking-widest border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
-                >
-                    Login
-                </Link>
+                <!-- AUTENTICACIÓN / ACCESOS -->
+                <div class="flex items-center gap-3">
+                    <div v-if="$page.props.auth && $page.props.auth.user" class="flex items-center gap-3">
+                        <span class="hidden lg:inline text-xs font-black uppercase text-slate-400">
+                            ¡HOLA, {{ $page.props.auth.user.name.split(' ')[0] }}!
+                        </span>
+                        
+                        <!-- Panel Admin si es administrador -->
+                        <Link 
+                            v-if="$page.props.auth.user.role === 'admin' || $page.props.auth.user.email.includes('david')" 
+                            :href="route('dashboard')" 
+                            class="bg-[#ffcc00] text-slate-950 border-2 border-slate-900 px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+                        >
+                            PANEL ADMIN
+                        </Link>
+                        
+                        <!-- Botón de Cerrar Sesión -->
+                        <Link 
+                            :href="route('logout')" 
+                            method="post" 
+                            as="button" 
+                            class="bg-slate-900 hover:bg-slate-800 text-white border-2 border-slate-900 px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+                        >
+                            SALIR
+                        </Link>
+                    </div>
+                    
+                    <Link 
+                        v-else 
+                        :href="route('login')" 
+                        class="bg-red-700 text-white px-5 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest border-2 border-slate-900 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+                    >
+                        INICIAR SESIÓN
+                    </Link>
+                </div>
             </div>
         </div>
     </nav>
 </template>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Epilogue:wght@900&family=Be+Vietnam+Pro:wght@400;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
+</style>

@@ -18,7 +18,16 @@ class DatabaseSeeder extends Seeder
     \App\Models\User::factory()->create([
         'name' => 'David Bonilla',
         'email' => 'davidbonilla1626@gmail.com',
-        'password' => bcrypt('password123'), // Tu contraseña será password123
+        'password' => bcrypt('password123'), // Contraseña del cliente de prueba
+        'role' => 'user',
+    ]);
+
+    // Crear el usuario administrador solicitado
+    \App\Models\User::factory()->create([
+        'name' => 'Administrador QuickBite',
+        'email' => 'admin@quickbite.com',
+        'password' => bcrypt('restaurante2026'), // Clave requerida para el administrador
+        'role' => 'admin',
     ]);
 
     // Llamar a tus otros seeders

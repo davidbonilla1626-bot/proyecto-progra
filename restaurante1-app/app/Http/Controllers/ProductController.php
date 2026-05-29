@@ -2,63 +2,171 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product; // Importamos el modelo de Producto
-use App\Models\Category; // Importamos el modelo de Categoría
+use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Http\Request;
-use Inertia\Inertia; // Necesario para renderizar vistas de Vue con datos de Laravel
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class ProductController extends Controller
 {
     /**
      * Muestra la lista de productos en el panel de administración.
-     * Es la parte de "Lectura" del CRUD.
      */
     public function index()
     {
+        // Traemos el producto y su categoría con Eager Loading
+        $products = Product::with('category')->get();
+        $categories = Category::all();
+
         return Inertia::render('Products/Index', [
-            // Eager loading: Traemos el producto y su categoría para evitar múltiples consultas
-            'products' => Product::with('category')->get() 
+            'products' => $products,
+            'categories' => $categories
         ]);
     }
 
     /**
-     * Muestra el formulario para crear un nuevo platillo.
+     * Muestra el formulario para crear un nuevo producto.
      */
     public function create()
     {
         return Inertia::render('Products/Create', [
-            // Enviamos todas las categorías para llenar el selector (dropdown) del formulario
-            'categories' => Category::all() 
+            'categories' => Category::all()
         ]);
     }
 
     /**
-     * Procesa los datos enviados desde el formulario y los guarda en la BD.
+     * Guarda un producto en la base de datos (Solo Admin).
      */
     public function store(Request $request)
     {
-        // Validamos que los datos cumplan con lo requerido para evitar errores en la BD
+        // Doble verificación en el controlador
+        if (!Auth::user()->isAdmin()) {
+            return redirect()->back()->with('error', 'Acceso denegado. Se requieren permisos de administrador.');
+        }
+
         $validated = $request->validate([
-            'name' => 'required|string|max:100', // Nombre obligatorio
-            'description' => 'required|string',   // Descripción obligatoria
-            'price' => 'required|numeric|min:0', // El precio no puede ser negativo
-            'category_id' => 'required|exists:categories,id', // Debe ser una categoría real
-            'image_path' => 'required|string'    // Ruta de la imagen (por ahora texto)
+            'name' => 'required|string|max:100',
+            'description' => 'required|string|max:1000',
+            'price' => 'required|numeric|min:0.01',
+            'category_id' => 'required|exists:categories,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'image_url' => 'nullable|string|url'
+        ], [
+            'name.required' => 'El nombre del producto es obligatorio.',
+            'description.required' => 'La descripción es obligatoria.',
+            'price.required' => 'El precio es obligatorio.',
+            'price.numeric' => 'El precio debe ser un número.',
+            'price.min' => 'El precio debe ser mayor a 0.',
+            'category_id.required' => 'La categoría es obligatoria.',
+            'category_id.exists' => 'La categoría seleccionada no existe.'
         ]);
 
-        // Creamos el registro en la base de datos
-        Product::create($validated);
+        $imagePath = 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500'; // Default
 
-        // Redirigimos al usuario a la lista de productos con un mensaje de éxito
-        return redirect()->route('products.index')->with('message', 'Producto creado con éxito');
+        // Subir archivo de imagen si existe
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('products', 'public');
+            $imagePath = '/storage/' . $path;
+        } elseif (!empty($validated['image_url'])) {
+            $imagePath = $validated['image_url'];
+        }
+
+        Product::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'],
+            'price' => $validated['price'],
+            'category_id' => $validated['category_id'],
+            'image' => $imagePath,
+            'image_path' => $imagePath
+        ]);
+
+        return redirect()->route('products.index')->with('message', '¡Producto creado con éxito!');
     }
 
     /**
-     * Elimina un platillo específico.
+     * Muestra el formulario para editar un producto.
+     */
+    public function edit(Product $product)
+    {
+        return Inertia::render('Products/Edit', [
+            'product' => $product,
+            'categories' => Category::all()
+        ]);
+    }
+
+    /**
+     * Actualiza un producto específico (Solo Admin).
+     */
+    public function update(Request $request, Product $product)
+    {
+        if (!Auth::user()->isAdmin()) {
+            return redirect()->back()->with('error', 'Acceso denegado. Se requieren permisos de administrador.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'description' => 'required|string|max:1000',
+            'price' => 'required|numeric|min:0.01',
+            'category_id' => 'required|exists:categories,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'image_url' => 'nullable|string|url'
+        ], [
+            'name.required' => 'El nombre del producto es obligatorio.',
+            'description.required' => 'La descripción es obligatoria.',
+            'price.required' => 'El precio es obligatorio.',
+            'price.numeric' => 'El precio debe ser un número.',
+            'price.min' => 'El precio debe ser mayor a 0.',
+            'category_id.required' => 'La categoría es obligatoria.',
+            'category_id.exists' => 'La categoría seleccionada no existe.'
+        ]);
+
+        $imagePath = $product->image;
+
+        // Subir archivo de imagen si se provee uno nuevo
+        if ($request->hasFile('image')) {
+            // Eliminar imagen anterior si era local
+            if (str_starts_with($product->image, '/storage/')) {
+                $oldPath = str_replace('/storage/', '', $product->image);
+                Storage::disk('public')->delete($oldPath);
+            }
+            
+            $path = $request->file('image')->store('products', 'public');
+            $imagePath = '/storage/' . $path;
+        } elseif (!empty($validated['image_url'])) {
+            $imagePath = $validated['image_url'];
+        }
+
+        $product->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'],
+            'price' => $validated['price'],
+            'category_id' => $validated['category_id'],
+            'image' => $imagePath,
+            'image_path' => $imagePath
+        ]);
+
+        return redirect()->route('products.index')->with('message', '¡Producto actualizado con éxito!');
+    }
+
+    /**
+     * Elimina un producto de la base de datos (Solo Admin).
      */
     public function destroy(Product $product)
     {
-        $product->delete(); // Borra el registro de la tabla 'products'
-        return redirect()->route('products.index'); // Recarga la lista
+        if (!Auth::user()->isAdmin()) {
+            return redirect()->back()->with('error', 'Acceso denegado. Se requieren permisos de administrador.');
+        }
+
+        // Eliminar imagen local si existe
+        if (str_starts_with($product->image, '/storage/')) {
+            $oldPath = str_replace('/storage/', '', $product->image);
+            Storage::disk('public')->delete($oldPath);
+        }
+
+        $product->delete();
+
+        return redirect()->route('products.index')->with('message', '¡Producto eliminado con éxito!');
     }
 }
