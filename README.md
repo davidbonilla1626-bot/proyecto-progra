@@ -8,7 +8,7 @@
 
 **Danery Alfredo Ascencio Saravia – SMSS057624**
 
-**Samuel Alejandro Batres Caceres – SMSS057424**
+**Samuel Alejandro Batres Caceres - SMSS057424**
 
 **Andrea Yamileth Rodríguez Hernández – SMSS073124**
 
