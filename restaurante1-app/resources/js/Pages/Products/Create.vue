@@ -179,8 +179,8 @@ const handleFileChange = (e) => {
                             <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Dirección URL de la Imagen</label>
                             <input 
                                 v-model="form.image_url" 
-                                type="url" 
-                                placeholder="Pega un enlace web (ej. Unsplash)" 
+                                type="text" 
+                                placeholder="Pega un enlace web (ej. Unsplash o ruta de imagen)" 
                                 class="w-full rounded-xl border-2 border-slate-900 focus:border-red-700 focus:ring-0 transition-colors px-4 py-3 text-sm font-bold text-slate-900 bg-white"
                             >
                             <p class="text-[10px] text-slate-400 mt-1 font-semibold">

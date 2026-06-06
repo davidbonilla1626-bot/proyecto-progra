@@ -53,7 +53,7 @@ class ProductController extends Controller
             'stock' => 'required|integer|min:0',
             'category_id' => 'required|exists:categories,id',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
-            'image_url' => 'nullable|string|url'
+            'image_url' => 'nullable|string|max:2048'
         ], [
             'name.required' => 'El nombre del producto es obligatorio.',
             'description.required' => 'La descripción es obligatoria.',
@@ -119,7 +119,7 @@ class ProductController extends Controller
             'stock' => 'required|integer|min:0',
             'category_id' => 'required|exists:categories,id',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
-            'image_url' => 'nullable|string|url'
+            'image_url' => 'nullable|string|max:2048'
         ], [
             'name.required' => 'El nombre del producto es obligatorio.',
             'description.required' => 'La descripción es obligatoria.',
