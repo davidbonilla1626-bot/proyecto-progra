@@ -44,6 +44,7 @@ class ProductSeeder extends Seeder
         ];
 
         foreach ($products as $product) {
+            $product['stock'] = rand(5, 25);
             Product::create($product);
         }
     }

@@ -47,23 +47,44 @@ class OrderController extends Controller
         ], [
             'items.required' => 'El carrito no puede estar vacío.',
             'items.min' => 'El carrito debe contener al menos un producto.',
+            'items.*.quantity.min' => 'La cantidad de productos debe ser mayor que 0.',
             'total.required' => 'El total del pedido es obligatorio.'
         ]);
 
         try {
             DB::beginTransaction();
 
+            // Generación de número de orden con formato: ORD-2026-001
+            $year = date('Y');
+            $lastOrder = Order::where('order_number', 'like', "ORD-{$year}-%")->orderBy('id', 'desc')->first();
+            if ($lastOrder) {
+                $lastNum = (int) substr($lastOrder->order_number, -3);
+                $nextNum = str_pad($lastNum + 1, 3, '0', STR_PAD_LEFT);
+            } else {
+                $nextNum = '001';
+            }
+            $orderNumber = "ORD-{$year}-{$nextNum}";
+
             // 1. Crear la orden principal
             $order = Order::create([
                 'user_id' => Auth::id(),
+                'order_number' => $orderNumber,
                 'status' => 'Pendiente',
                 'total' => $request->total,
                 'notes' => $request->notes
             ]);
 
-            // 2. Crear los detalles de la orden (order_items)
+            // 2. Crear los detalles de la orden (order_items) y descontar stock
             foreach ($request->items as $item) {
                 $product = Product::findOrFail($item['product_id']);
+                
+                // Validación de stock disponible
+                if ($product->stock < $item['quantity']) {
+                    throw new \Exception("No hay suficiente stock para {$product->name}. Stock disponible: {$product->stock}");
+                }
+
+                // Reducción automática de stock
+                $product->decrement('stock', $item['quantity']);
                 
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -102,11 +123,40 @@ class OrderController extends Controller
             'status.in' => 'El estado seleccionado no es válido.'
         ]);
 
-        $order->update([
-            'status' => $validated['status']
-        ]);
+        try {
+            DB::beginTransaction();
 
-        return redirect()->back()->with('message', 'Estado del pedido actualizado a "' . $validated['status'] . '"');
+            $oldStatus = $order->status;
+            $order->update([
+                'status' => $validated['status']
+            ]);
+
+            // Si cambia a Cancelado y antes no lo estaba, devolvemos el stock
+            if ($validated['status'] === 'Cancelado' && $oldStatus !== 'Cancelado') {
+                foreach ($order->items as $item) {
+                    $item->product->increment('stock', $item->quantity);
+                }
+            }
+            // Si cambia de Cancelado a otra cosa, restamos el stock de nuevo (validando que haya suficiente)
+            elseif ($oldStatus === 'Cancelado' && $validated['status'] !== 'Cancelado') {
+                foreach ($order->items as $item) {
+                    if ($item->product->stock < $item->quantity) {
+                        throw new \Exception("No se puede reactivar el pedido. El producto '{$item->product->name}' no tiene suficiente stock.");
+                    }
+                    $item->product->decrement('stock', $item->quantity);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('message', 'Estado del pedido actualizado a "' . $validated['status'] . '"');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors([
+                'error' => 'Error al cambiar el estado: ' . $e->getMessage()
+            ]);
+        }
     }
 
     /**

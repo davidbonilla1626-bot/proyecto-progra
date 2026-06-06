@@ -16,6 +16,7 @@ const form = useForm({
     name: props.product.name,
     description: props.product.description,
     price: props.product.price,
+    stock: props.product.stock,
     category_id: props.product.category_id,
     image: null,
     image_url: props.product.image && props.product.image.startsWith('http') ? props.product.image : ''
@@ -95,8 +96,8 @@ const handleFileChange = (e) => {
                         </div>
                     </div>
 
-                    <!-- PRECIO Y CATEGORÍA -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- PRECIO, STOCK Y CATEGORÍA -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         
                         <!-- Precio -->
                         <div>
@@ -114,6 +115,20 @@ const handleFileChange = (e) => {
                                 >
                             </div>
                             <p v-if="form.errors.price" class="text-red-600 text-xs mt-1 font-bold">{{ form.errors.price }}</p>
+                        </div>
+
+                        <!-- Stock -->
+                        <div>
+                            <label class="block text-xs font-black uppercase tracking-widest text-slate-600 mb-2">
+                                Stock Disponible *
+                            </label>
+                            <input 
+                                v-model="form.stock" 
+                                type="number" 
+                                class="w-full rounded-xl border-2 border-slate-900 focus:border-red-700 focus:ring-0 transition-colors px-4 py-3.5 text-sm font-bold text-slate-900 bg-white" 
+                                required
+                            >
+                            <p v-if="form.errors.stock" class="text-red-600 text-xs mt-1 font-bold">{{ form.errors.stock }}</p>
                         </div>
 
                         <!-- Categoría -->

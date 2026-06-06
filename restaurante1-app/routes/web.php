@@ -61,11 +61,25 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'admin'])->group(function () {
     // Dashboard principal
     Route::get('/dashboard', function () {
-        // Enviar estadísticas reales a la vista del Dashboard
+        $weeklySales = collect();
+        for ($i = 6; $i >= 0; $i--) {
+            $date = today()->subDays($i);
+            $revenue = \App\Models\Order::whereDate('created_at', $date)
+                ->where('status', 'Entregado')
+                ->sum('total');
+            $weeklySales->push([
+                'date' => $date->format('d/m'),
+                'revenue' => (float) $revenue
+            ]);
+        }
+
         $stats = [
-            'daily_revenue' => \App\Models\Order::whereDate('created_at', today())->where('status', '!=', 'Cancelado')->sum('total'),
+            'orders_today' => \App\Models\Order::whereDate('created_at', today())->count(),
+            'revenue_today' => (float) \App\Models\Order::whereDate('created_at', today())->where('status', 'Entregado')->sum('total'),
+            'low_stock' => \App\Models\Product::where('stock', '<=', 3)->where('stock', '>', 0)->count(),
+            'out_of_stock' => \App\Models\Product::where('stock', 0)->count(),
             'orders_to_grill' => \App\Models\Order::whereIn('status', ['Pendiente', 'En preparación'])->count(),
-            'delivered_orders' => \App\Models\Order::where('status', 'Entregado')->count(),
+            'weekly_sales' => $weeklySales,
             'live_orders' => \App\Models\Order::with(['user', 'items.product'])->orderBy('created_at', 'desc')->take(10)->get()
         ];
         
@@ -82,6 +96,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Actualizar estado del pedido desde el dashboard
     Route::patch('/orders/{order}/status', [OrderController::class, 'update'])->name('orders.updateStatus');
+
+    // Generar reporte en PDF
+    Route::get('/reports/pdf', [\App\Http\Controllers\ReportController::class, 'downloadPdf'])->name('reports.pdf');
 });
 
 require __DIR__.'/auth.php';

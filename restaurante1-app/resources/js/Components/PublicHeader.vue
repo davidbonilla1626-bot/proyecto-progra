@@ -1,9 +1,10 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { useCart } from '@/Composables/useCart';
 
 // Obtenemos la cantidad de items del carrito para mostrar en la burbuja roja
 const { cartCount } = useCart();
+const page = usePage();
 </script>
 
 <template>
@@ -105,6 +106,35 @@ const { cartCount } = useCart();
             </div>
         </div>
     </nav>
+
+    <!-- BANNER DE NOTIFICACIONES GLOBALES -->
+    <div class="fixed top-24 right-6 z-50 flex flex-col gap-3 max-w-sm w-full">
+        <TransitionGroup name="list">
+            <div v-if="page.props.flash?.message" key="msg" class="bg-emerald-100 border-4 border-slate-900 p-4 rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-emerald-950 flex gap-3 items-start animate-scaleUp">
+                <span class="material-symbols-outlined text-emerald-700 font-bold shrink-0">check_circle</span>
+                <div class="flex-grow">
+                    <p class="text-xs font-black uppercase tracking-wider text-emerald-800">Éxito</p>
+                    <p class="text-xs font-bold mt-1 leading-normal text-slate-800">{{ page.props.flash.message }}</p>
+                </div>
+            </div>
+            <div v-if="page.props.flash?.error" key="err" class="bg-red-100 border-4 border-slate-900 p-4 rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-red-950 flex gap-3 items-start animate-scaleUp">
+                <span class="material-symbols-outlined text-red-700 font-bold shrink-0">error</span>
+                <div class="flex-grow">
+                    <p class="text-xs font-black uppercase tracking-wider text-red-800">Error</p>
+                    <p class="text-xs font-bold mt-1 leading-normal text-slate-800">{{ page.props.flash.error }}</p>
+                </div>
+            </div>
+            <div v-if="page.props.errors && Object.keys(page.props.errors).length > 0" key="validation-err" class="bg-yellow-100 border-4 border-slate-900 p-4 rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-yellow-950 flex gap-3 items-start animate-scaleUp">
+                <span class="material-symbols-outlined text-yellow-600 font-bold shrink-0">warning</span>
+                <div class="flex-grow">
+                    <p class="text-xs font-black uppercase tracking-wider text-yellow-850">Atención / Validación</p>
+                    <ul class="text-[11px] font-bold mt-1 list-disc pl-4 space-y-1 text-slate-800">
+                        <li v-for="(err, key) in page.props.errors" :key="key">{{ err }}</li>
+                    </ul>
+                </div>
+            </div>
+        </TransitionGroup>
+    </div>
 </template>
 
 <style>

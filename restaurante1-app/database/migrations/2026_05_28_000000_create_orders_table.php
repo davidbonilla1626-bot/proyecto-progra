@@ -21,6 +21,7 @@ return new class extends Migration
                   ->on('users')
                   ->onDelete('cascade');
                   
+            $table->string('order_number')->unique();
             $table->string('status')->default('Pendiente'); // 'Pendiente', 'En preparación', 'Listo para entrega', 'Entregado', 'Cancelado'
             $table->decimal('total', 10, 2);
             $table->text('notes')->nullable();

@@ -71,9 +71,9 @@ const getStatusBadgeClass = (status) => {
         case 'Pendiente':
             return 'bg-yellow-100 text-yellow-800 border-yellow-300';
         case 'En preparación':
-            return 'bg-orange-100 text-orange-800 border-orange-300';
-        case 'Listo para entrega':
             return 'bg-blue-100 text-blue-800 border-blue-300';
+        case 'Listo para entrega':
+            return 'bg-purple-100 text-purple-800 border-purple-300';
         case 'Entregado':
             return 'bg-green-100 text-green-800 border-green-300';
         case 'Cancelado':
@@ -178,7 +178,7 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
                             <tr v-for="order in orders" :key="order.id" class="hover:bg-yellow-50 transition-colors">
                                 
                                 <!-- ID -->
-                                <td class="px-6 py-4 font-black text-slate-900 font-['Epilogue']">#QB-{{ order.id }}</td>
+                                <td class="px-6 py-4 font-black text-slate-900 font-['Epilogue']">{{ order.order_number || '#QB-' + order.id }}</td>
                                 
                                 <!-- Cliente -->
                                 <td class="px-6 py-4 text-slate-700">
@@ -257,7 +257,13 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
                 <div v-for="order in orders" :key="order.id" class="bg-white border-2 border-slate-900 rounded-3xl p-6 md:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
                     
                     <!-- Decoración lateral activa: Se muestra color según el estado -->
-                    <div class="absolute left-0 top-0 bottom-0 w-2" :class="order.status === 'Entregado' ? 'bg-green-500' : (order.status === 'Cancelado' ? 'bg-red-500' : 'bg-yellow-400 animate-pulse')"></div>
+                    <div class="absolute left-0 top-0 bottom-0 w-2" :class="{
+                        'bg-yellow-400 animate-pulse': order.status === 'Pendiente',
+                        'bg-blue-500 animate-pulse': order.status === 'En preparación',
+                        'bg-purple-500': order.status === 'Listo para entrega',
+                        'bg-green-500': order.status === 'Entregado',
+                        'bg-red-500': order.status === 'Cancelado'
+                    }"></div>
 
                     <!-- Detalles -->
                     <div class="flex flex-col md:flex-row justify-between gap-6">
@@ -265,7 +271,7 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
                         <!-- Bloque Izquierdo: ID, Estado y Lista de Productos -->
                         <div class="space-y-4 flex-grow">
                             <div class="flex items-center gap-3">
-                                <span class="font-black text-xl font-['Epilogue'] text-slate-950">Pedido #QB-{{ order.id }}</span>
+                                <span class="font-black text-xl font-['Epilogue'] text-slate-950">Pedido {{ order.order_number || '#QB-' + order.id }}</span>
                                 <span class="text-xs font-black text-slate-400 uppercase tracking-widest">{{ formatDate(order.created_at) }}</span>
                             </div>
                             
@@ -281,10 +287,14 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
                             <!-- Resumen de items -->
                             <div class="border-t border-slate-100 pt-3">
                                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Artículos en la bolsa</p>
-                                <ul class="space-y-1">
-                                    <li v-for="item in order.items" :key="item.id" class="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                        <span class="w-1.5 h-1.5 bg-red-700 rounded-full"></span> 
-                                        {{ item.quantity }}x {{ item.product?.name || 'Producto' }} ({{ formatPrice(item.price) }})
+                                <ul class="space-y-2">
+                                    <li v-for="item in order.items" :key="item.id" class="text-sm font-bold text-slate-700 flex justify-between items-center gap-2 border-b border-dashed border-slate-100 pb-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 bg-red-700 rounded-full"></span> 
+                                            <span>{{ item.quantity }}x {{ item.product?.name || 'Producto' }}</span>
+                                            <span class="text-xs text-slate-400 font-normal">({{ formatPrice(item.price) }} c/u)</span>
+                                        </div>
+                                        <span class="text-slate-900 font-black">Subtotal: {{ formatPrice(item.price * item.quantity) }}</span>
                                     </li>
                                 </ul>
                             </div>
@@ -326,7 +336,7 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
             <!-- Encabezado Modal -->
             <div class="border-b-2 border-slate-900 pb-4 mb-6">
                 <h3 class="text-2xl font-black italic uppercase font-['Epilogue'] tracking-tighter text-slate-950">
-                    DETALLE DEL PEDIDO #QB-{{ selectedOrder.id }}
+                    DETALLE DEL PEDIDO {{ selectedOrder.order_number || '#QB-' + selectedOrder.id }}
                 </h3>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
                     {{ formatDate(selectedOrder.created_at) }}

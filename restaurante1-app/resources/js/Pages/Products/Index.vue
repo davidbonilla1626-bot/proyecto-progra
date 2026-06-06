@@ -87,6 +87,7 @@ const deleteProduct = (id, name) => {
                                 <th class="px-6 py-5">PRODUCTO</th>
                                 <th class="px-6 py-5">CATEGORÍA</th>
                                 <th class="px-6 py-5">PRECIO</th>
+                                <th class="px-6 py-5">STOCK</th>
                                 <th class="px-6 py-5 text-right font-bold">ACCIONES</th>
                             </tr>
                         </thead>
@@ -122,6 +123,20 @@ const deleteProduct = (id, name) => {
                                 <td class="px-6 py-4">
                                     <span class="font-black text-red-700 text-lg font-['Epilogue']">
                                         {{ formatPrice(product.price) }}
+                                    </span>
+                                </td>
+
+                                <!-- STOCK -->
+                                <td class="px-6 py-4">
+                                    <span v-if="product.stock === 0" class="bg-red-100 text-red-700 border-2 border-red-700 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                        Agotado
+                                    </span>
+                                    <span v-else-if="product.stock <= 3" class="bg-yellow-100 text-yellow-800 border-2 border-yellow-800 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1 w-fit">
+                                        <span class="material-symbols-outlined text-[14px] font-bold">warning</span>
+                                        Bajo Stock ({{ product.stock }})
+                                    </span>
+                                    <span v-else class="bg-green-100 text-green-700 border-2 border-green-700 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                        {{ product.stock }} u.
                                     </span>
                                 </td>
                                 

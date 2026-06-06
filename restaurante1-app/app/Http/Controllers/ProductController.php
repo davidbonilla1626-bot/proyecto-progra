@@ -49,18 +49,25 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'description' => 'required|string|max:1000',
-            'price' => 'required|numeric|min:0.01',
+            'price' => 'required|numeric|gt:0',
+            'stock' => 'required|integer|min:0',
             'category_id' => 'required|exists:categories,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
             'image_url' => 'nullable|string|url'
         ], [
             'name.required' => 'El nombre del producto es obligatorio.',
             'description.required' => 'La descripción es obligatoria.',
             'price.required' => 'El precio es obligatorio.',
             'price.numeric' => 'El precio debe ser un número.',
-            'price.min' => 'El precio debe ser mayor a 0.',
+            'price.gt' => 'El precio debe ser mayor a 0.',
+            'stock.required' => 'El stock inicial es obligatorio.',
+            'stock.integer' => 'El stock debe ser un número entero.',
+            'stock.min' => 'El stock debe ser mayor o igual a 0.',
             'category_id.required' => 'La categoría es obligatoria.',
-            'category_id.exists' => 'La categoría seleccionada no existe.'
+            'category_id.exists' => 'La categoría seleccionada no existe.',
+            'image.image' => 'El archivo debe ser una imagen.',
+            'image.mimes' => 'La imagen debe tener un formato válido (jpeg, jpg, png, webp).',
+            'image.max' => 'La imagen no debe pesar más de 2MB.'
         ]);
 
         $imagePath = 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500'; // Default
@@ -77,9 +84,9 @@ class ProductController extends Controller
             'name' => $validated['name'],
             'description' => $validated['description'],
             'price' => $validated['price'],
+            'stock' => $validated['stock'],
             'category_id' => $validated['category_id'],
             'image' => $imagePath,
-            
         ]);
 
         return redirect()->route('products.index')->with('message', '¡Producto creado con éxito!');
@@ -108,18 +115,25 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'description' => 'required|string|max:1000',
-            'price' => 'required|numeric|min:0.01',
+            'price' => 'required|numeric|gt:0',
+            'stock' => 'required|integer|min:0',
             'category_id' => 'required|exists:categories,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
             'image_url' => 'nullable|string|url'
         ], [
             'name.required' => 'El nombre del producto es obligatorio.',
             'description.required' => 'La descripción es obligatoria.',
             'price.required' => 'El precio es obligatorio.',
             'price.numeric' => 'El precio debe ser un número.',
-            'price.min' => 'El precio debe ser mayor a 0.',
+            'price.gt' => 'El precio debe ser mayor a 0.',
+            'stock.required' => 'El stock es obligatorio.',
+            'stock.integer' => 'El stock debe ser un número entero.',
+            'stock.min' => 'El stock debe ser mayor o igual a 0.',
             'category_id.required' => 'La categoría es obligatoria.',
-            'category_id.exists' => 'La categoría seleccionada no existe.'
+            'category_id.exists' => 'La categoría seleccionada no existe.',
+            'image.image' => 'El archivo debe ser una imagen.',
+            'image.mimes' => 'La imagen debe tener un formato válido (jpeg, jpg, png, webp).',
+            'image.max' => 'La imagen no debe pesar más de 2MB.'
         ]);
 
         $imagePath = $product->image;
@@ -142,9 +156,9 @@ class ProductController extends Controller
             'name' => $validated['name'],
             'description' => $validated['description'],
             'price' => $validated['price'],
+            'stock' => $validated['stock'],
             'category_id' => $validated['category_id'],
             'image' => $imagePath,
-
         ]);
 
         return redirect()->route('products.index')->with('message', '¡Producto actualizado con éxito!');

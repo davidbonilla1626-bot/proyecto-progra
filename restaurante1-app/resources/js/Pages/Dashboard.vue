@@ -11,6 +11,12 @@ const props = defineProps({
     }
 });
 
+const maxWeeklyRevenue = computed(() => {
+    if (!props.stats.weekly_sales || props.stats.weekly_sales.length === 0) return 1;
+    const max = Math.max(...props.stats.weekly_sales.map(d => d.revenue));
+    return max > 0 ? max : 1;
+});
+
 // Formateador de moneda profesional
 const formatPrice = (price) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
@@ -74,7 +80,11 @@ const getStatusBadgeClass = (status) => {
                         Monitoreo a alta velocidad para QuickBite Express HQ. Revisa los ingresos de hoy, el flujo en la cocina y gestiona pedidos activos.
                     </p>
                 </div>
-                <div class="flex gap-3">
+                <div class="flex flex-wrap gap-3">
+                    <a href="/reports/pdf" target="_blank" class="bg-red-700 text-white border-2 border-slate-900 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[16px] font-bold">picture_as_pdf</span>
+                        GENERAR REPORTE PDF
+                    </a>
                     <Link :href="route('public.menu')" class="bg-white text-slate-900 border-2 border-slate-900 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
                         IR AL MENÚ
                     </Link>
@@ -82,51 +92,94 @@ const getStatusBadgeClass = (status) => {
             </div>
 
             <!-- TARJETAS DE ESTADÍSTICAS -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Tarjeta 1: Revenue -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Tarjeta 1: Ingresos de Hoy -->
                 <div class="bg-white border-2 border-slate-900 border-b-8 border-b-[#b7102a] rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
                     <div class="flex justify-between items-start mb-6">
-                        <h3 class="text-xs font-black text-slate-500 tracking-widest uppercase">VENTAS DEL DÍA</h3>
+                        <h3 class="text-xs font-black text-slate-500 tracking-widest uppercase">INGRESOS DE HOY</h3>
                         <div class="w-8 h-8 rounded-full bg-red-100 text-[#b7102a] flex items-center justify-center font-black">
                             <span class="material-symbols-outlined text-[16px]">attach_money</span>
                         </div>
                     </div>
                     <p class="text-4xl font-black text-slate-900 font-['Epilogue']">
-                        {{ formatPrice(stats.daily_revenue || 0) }}
+                        {{ formatPrice(stats.revenue_today || 0) }}
                     </p>
                     <p class="text-xs font-bold text-slate-400 mt-2">
-                        Calculado en base a pedidos entregados y activos hoy
+                        Ventas completadas/entregadas hoy
                     </p>
                 </div>
 
-                <!-- Tarjeta 2: Orders to Grill -->
+                <!-- Tarjeta 2: Pedidos de Hoy -->
                 <div class="bg-[#ffcc00] border-2 border-slate-900 border-b-8 border-b-slate-900 rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-slate-950">
                     <div class="flex justify-between items-start mb-6">
-                        <h3 class="text-xs font-black text-slate-950 tracking-widest uppercase">PEDIDOS EN COCINA</h3>
-                        <span class="material-symbols-outlined text-slate-950 font-bold">outdoor_grill</span>
+                        <h3 class="text-xs font-black text-slate-950 tracking-widest uppercase">PEDIDOS DE HOY</h3>
+                        <span class="material-symbols-outlined text-slate-950 font-bold">receipt_long</span>
                     </div>
                     <p class="text-4xl font-black text-slate-950 font-['Epilogue']">
-                        {{ stats.orders_to_grill || 0 }}
+                        {{ stats.orders_today || 0 }}
                     </p>
                     <p class="text-xs font-black text-slate-900 uppercase tracking-widest mt-2">
-                        {{ stats.orders_to_grill > 0 ? 'FUEGO ACTIVO EN LA PARRILLA' : 'ESPERANDO NUEVOS PEDIDOS' }}
+                        Total registrados hoy
                     </p>
                 </div>
 
-                <!-- Tarjeta 3: Delivered Orders -->
+                <!-- Tarjeta 3: Stock Bajo -->
+                <div class="bg-orange-100 border-2 border-slate-900 border-b-8 border-b-orange-600 rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-slate-900">
+                    <div class="flex justify-between items-start mb-6">
+                        <h3 class="text-xs font-black text-slate-600 tracking-widest uppercase">STOCK BAJO</h3>
+                        <span class="material-symbols-outlined text-orange-600 font-bold">warning</span>
+                    </div>
+                    <p class="text-4xl font-black text-slate-900 font-['Epilogue']">
+                        {{ stats.low_stock || 0 }}
+                    </p>
+                    <p class="text-xs font-bold text-slate-500 mt-2">
+                        Productos con &le; 3 unidades
+                    </p>
+                </div>
+
+                <!-- Tarjeta 4: Productos Agotados -->
                 <div class="bg-[#0f172a] border-2 border-slate-900 border-b-8 border-b-[#ffcc00] rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-white">
                     <div class="flex justify-between items-start mb-6">
-                        <h3 class="text-xs font-black text-slate-400 tracking-widest uppercase">ENTREGADOS HOY</h3>
-                        <span class="material-symbols-outlined text-[#ffcc00] font-bold">task_alt</span>
+                        <h3 class="text-xs font-black text-slate-400 tracking-widest uppercase">AGOTADOS</h3>
+                        <span class="material-symbols-outlined text-red-500 font-bold">block</span>
                     </div>
                     <p class="text-4xl font-black text-white font-['Epilogue']">
-                        {{ stats.delivered_orders || 0 }}
+                        {{ stats.out_of_stock || 0 }}
                     </p>
-                    <p class="text-xs font-bold text-[#ffcc00] mt-2 flex items-center gap-1">
-                        Servicio rápido y confiable
+                    <p class="text-xs font-bold text-[#ffcc00] mt-2">
+                        Productos con stock cero
                     </p>
                 </div>
             </div>
+
+            <!-- GRÁFICO DE VENTAS DIARIAS DE LA ÚLTIMA SEMANA -->
+            <section class="bg-white border-2 border-slate-900 rounded-2xl p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <div class="flex items-center justify-between border-b-2 border-slate-900 pb-3 mb-6">
+                    <h3 class="text-sm font-black italic uppercase text-slate-900 tracking-widest flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">bar_chart</span> VENTAS DIARIAS DE LA ÚLTIMA SEMANA
+                    </h3>
+                </div>
+                
+                <div class="h-64 flex items-end gap-3 pt-6 border-b border-slate-200 pl-4 pb-2">
+                    <div v-for="day in stats.weekly_sales" :key="day.date" class="flex-1 flex flex-col items-center h-full justify-end group relative cursor-pointer">
+                        <!-- Tooltip en hover -->
+                        <div class="absolute bottom-full mb-2 bg-slate-950 text-white text-[10px] font-black py-1 px-2.5 rounded-lg border border-slate-900 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-[2px_2px_0px_0px_rgba(255,204,0,1)] z-25">
+                            {{ formatPrice(day.revenue) }}
+                        </div>
+                        
+                        <!-- Barra de Gráfico -->
+                        <div 
+                            :style="{ height: `${day.revenue > 0 ? (day.revenue / maxWeeklyRevenue * 100) : 0}%` }"
+                            class="w-full bg-[#ffcc00] border-2 border-slate-900 rounded-t-lg transition-all duration-300 group-hover:bg-[#b7102a] min-h-[4px]"
+                        ></div>
+                        
+                        <!-- Etiqueta de fecha -->
+                        <span class="text-[10px] font-black text-slate-500 mt-2 uppercase tracking-wide">
+                            {{ day.date }}
+                        </span>
+                    </div>
+                </div>
+            </section>
 
             <!-- SECCIÓN LIVE ORDERS -->
             <section>
@@ -156,7 +209,7 @@ const getStatusBadgeClass = (status) => {
                             </thead>
                             <tbody class="divide-y divide-slate-200 font-bold">
                                 <tr v-for="order in stats.live_orders" :key="order.id" class="hover:bg-slate-50 transition-colors">
-                                    <td class="px-6 py-4 font-black text-slate-900 font-['Epilogue']">#QB-{{ order.id }}</td>
+                                    <td class="px-6 py-4 font-black text-slate-900 font-['Epilogue']">{{ order.order_number || '#QB-' + order.id }}</td>
                                     <td class="px-6 py-4 text-slate-700">
                                         {{ order.user?.name || 'Cliente QuickBite' }}
                                         <p class="text-[10px] text-slate-400 font-medium">{{ order.user?.email }}</p>

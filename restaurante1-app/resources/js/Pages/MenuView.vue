@@ -13,6 +13,7 @@ const props = defineProps({
 const { addToCart, cartCount, cartSubtotal } = useCart();
 
 const selectedCategory = ref('Todo');
+const searchQuery = ref('');
 
 // Definimos las categorías con iconos
 const categories = [
@@ -26,11 +27,28 @@ const categories = [
 ];
 
 const filteredProducts = computed(() => {
-    if (selectedCategory.value === 'Todo') return props.products;
-    return props.products.filter(p => {
-        const categoryName = typeof p.category === 'object' ? p.category?.name : p.category;
-        return categoryName === selectedCategory.value;
-    });
+    let result = props.products;
+    
+    // Filtrar por categoría seleccionada
+    if (selectedCategory.value !== 'Todo') {
+        result = result.filter(p => {
+            const categoryName = typeof p.category === 'object' ? p.category?.name : p.category;
+            return categoryName === selectedCategory.value;
+        });
+    }
+
+    // Filtrar por búsqueda dinámica (Nombre, Categoría, Descripción)
+    if (searchQuery.value.trim() !== '') {
+        const query = searchQuery.value.toLowerCase().trim();
+        result = result.filter(p => {
+            const categoryName = (typeof p.category === 'object' ? p.category?.name : p.category) || '';
+            return p.name.toLowerCase().includes(query) ||
+                   p.description.toLowerCase().includes(query) ||
+                   categoryName.toLowerCase().includes(query);
+        });
+    }
+
+    return result;
 });
 
 // Formateador de moneda profesional
@@ -75,10 +93,23 @@ const formatPrice = (price) => {
 
             <!-- CONTENIDO PRINCIPAL -->
             <main class="flex-1 p-6 md:p-10 bg-slate-50">
-                <header class="mb-10 border-b-2 border-slate-200 pb-4">
+                <header class="mb-10 border-b-2 border-slate-200 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <h1 class="text-4xl md:text-5xl font-black italic uppercase font-['Epilogue'] tracking-tighter leading-none text-slate-900">
                         SABOR A <span class="text-red-700">ALTA VELOCIDAD</span>
                     </h1>
+
+                    <!-- Buscador dinámico -->
+                    <div class="relative w-full md:w-80 shrink-0">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <span class="material-symbols-outlined font-bold">search</span>
+                        </span>
+                        <input 
+                            v-model="searchQuery" 
+                            type="text" 
+                            placeholder="Buscar por nombre, ingrediente o cat..." 
+                            class="pl-10 pr-4 py-2.5 w-full rounded-xl border-2 border-slate-900 focus:border-red-700 focus:ring-0 transition-all text-xs font-bold bg-white text-slate-900 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                        />
+                    </div>
                 </header>
 
                 <!-- GRID DE PRODUCTOS -->
@@ -90,7 +121,15 @@ const formatPrice = (price) => {
                         <div class="relative h-56 bg-slate-100 overflow-hidden border-b-2 border-slate-900">
                             <img :src="product.image || product.image_path" :alt="product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                             
-                            <div v-if="index < 2 && selectedCategory === 'Todo'" class="absolute top-4 left-4 bg-yellow-400 border-2 border-slate-900 px-3 py-1.5 text-[9px] font-black uppercase text-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                            <!-- Alerta de stock o Más vendido -->
+                            <div v-if="product.stock === 0" class="absolute top-4 right-4 bg-red-700 border-2 border-slate-900 px-3 py-1.5 text-[9px] font-black uppercase text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] z-10">
+                                AGOTADO
+                            </div>
+                            <div v-else-if="product.stock <= 3" class="absolute top-4 right-4 bg-yellow-400 border-2 border-slate-900 px-3 py-1.5 text-[9px] font-black uppercase text-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1 z-10">
+                                <span class="material-symbols-outlined text-[12px] font-bold">warning</span>
+                                ¡POCO STOCK! ({{ product.stock }})
+                            </div>
+                            <div v-else-if="index < 2 && selectedCategory === 'Todo'" class="absolute top-4 left-4 bg-yellow-400 border-2 border-slate-900 px-3 py-1.5 text-[9px] font-black uppercase text-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                                 MÁS VENDIDO
                             </div>
                         </div>
@@ -106,9 +145,16 @@ const formatPrice = (price) => {
                                 <!-- Botón Agregar al Carrito -->
                                 <button 
                                     @click="addToCart(product)"
-                                    class="bg-yellow-400 hover:bg-yellow-500 text-slate-900 px-4 py-2.5 rounded-xl border-2 border-slate-900 font-black text-xs uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all flex items-center gap-1.5 cursor-pointer"
+                                    :disabled="product.stock <= 0"
+                                    :class="[
+                                        'px-4 py-2.5 rounded-xl border-2 border-slate-900 font-black text-xs uppercase transition-all flex items-center gap-1.5 cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]',
+                                        product.stock <= 0 
+                                            ? 'bg-slate-350 text-slate-500 border-slate-400 cursor-not-allowed shadow-none' 
+                                            : 'bg-yellow-400 hover:bg-yellow-500 text-slate-900 hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px]'
+                                    ]"
                                 >
-                                    <span class="material-symbols-outlined text-sm font-bold">add</span> AÑADIR
+                                    <span class="material-symbols-outlined text-sm font-bold">{{ product.stock <= 0 ? 'block' : 'add' }}</span>
+                                    {{ product.stock <= 0 ? 'AGOTADO' : 'AÑADIR' }}
                                 </button>
                             </div>
                         </div>
