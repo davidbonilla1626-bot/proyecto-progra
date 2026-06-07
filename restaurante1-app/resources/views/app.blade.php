@@ -6,7 +6,7 @@
 
         <title inertia>{{ config('app.name', 'QuickBite Express') }}</title>
 
-        <link rel="icon" type="image/png" href="/images/quickbite.png">
+        <link rel="icon" type="image/png" href="/images/quickbite1.png">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
