@@ -98,6 +98,21 @@ Ejecutar las migraciones para crear la estructura de la base de datos:
 
 *php artisan migrate*
 
+Cargar los datos iniciales del sistema:
+
+*php artisan db:seed*
+
+*O bien:*
+
+*php artisan migrate:fresh --seed*
+
+# Almacenamiento de Archivos
+
+Crear el enlace simbólico para el almacenamiento de imágenes:
+
+*php artisan storage:link*
+
+
 
 
 <p align="center">
