@@ -86,6 +86,19 @@ Configuración del Entorno
 
 *DB_PASSWORD=contraseña*
 
+# Creación de la Base de Datos
+
+Crear una base de datos vacía en MySQL o phpmyadmin con el nombre:
+
+*CREATE DATABASE restaurante1_db;*
+
+Ejecución de Migraciones y Seeders
+
+Ejecutar las migraciones para crear la estructura de la base de datos:
+
+*php artisan migrate*
+
+
 
 <p align="center">
     <img src="https://raw.githubusercontent.com/davidbonilla1626-bot/proyecto-progra/main/restaurante1-app/public/images/quickbite1.png" width="150">
