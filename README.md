@@ -119,6 +119,10 @@ Iniciar el servidor de Laravel:
 
 *php artisan serve*
 
+Compilar los recursos del frontend:
+
+
+
 
 
 
