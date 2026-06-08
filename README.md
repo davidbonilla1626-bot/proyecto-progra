@@ -123,6 +123,18 @@ Compilar los recursos del frontend:
 
 *npm run dev*
 
+*php artisan serve*
+
+Compilar los recursos del frontend:
+
+*npm run dev*
+
+Finalmente, acceder al sistema desde:
+
+*http://127.0.0.1:8000*
+
+
+
 
 
 
