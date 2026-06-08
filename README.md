@@ -121,6 +121,8 @@ Iniciar el servidor de Laravel:
 
 Compilar los recursos del frontend:
 
+*npm run dev*
+
 
 
 
