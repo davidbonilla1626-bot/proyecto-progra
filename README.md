@@ -52,13 +52,6 @@
 
 *cd restaurante1-app*
 
-
-
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/davidbonilla1626-bot/proyecto-progra/main/restaurante1-app/public/images/quickbite1.png" width="150">
-  </p>
-
 # Instalación de Dependencias
 
 Instalar las dependencias de PHP:
@@ -92,3 +85,8 @@ Configuración del Entorno
 *DB_USERNAME=usuario*
 
 *DB_PASSWORD=contraseña*
+
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/davidbonilla1626-bot/proyecto-progra/main/restaurante1-app/public/images/quickbite1.png" width="150">
+  </p>
