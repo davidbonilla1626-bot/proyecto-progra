@@ -107,6 +107,12 @@ Cargar los datos iniciales del sistema:
 
 *php artisan migrate:fresh --seed*
 
+# Almacenamiento de Archivos
+
+Crear el enlace simbólico para el almacenamiento de imágenes:
+
+*php artisan storage:link*
+
 
 
 
