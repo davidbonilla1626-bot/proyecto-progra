@@ -133,12 +133,11 @@ Finalmente, acceder al sistema desde:
 
 *http://127.0.0.1:8000*
 
+# Gestor de Base de Datos Utilizado:
 
+*El proyecto utiliza MySQL como Sistema Gestor de Base de Datos (SGBD). MySQL fue seleccionado por su estabilidad, facilidad de integración con Laravel mediante Eloquent ORM, soporte para relaciones mediante llaves foráneas y amplio uso en aplicaciones web empresariales.*
 
-
-
-
-
+*La base de datos almacena la información relacionada con usuarios, categorías de productos, productos, pedidos, detalles de pedidos y demás entidades necesarias para el funcionamiento del sistema de gestión del restaurante.*
 
 <p align="center">
     <img src="https://raw.githubusercontent.com/davidbonilla1626-bot/proyecto-progra/main/restaurante1-app/public/images/quickbite1.png" width="150">
