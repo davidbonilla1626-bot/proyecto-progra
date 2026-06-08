@@ -35,14 +35,22 @@
 
 *Antes de ejecutar el proyecto, asegúrese de tener instalados los siguientes componentes:*
 
-**PHP 8.2 o superior**
-**Composer**
-**Node.js y npm**
-**MySQL Server**
-**Git**
-**Clonar el Repositorio**
+
+*PHP 8.2 o superior*
+
+*Composer*
+
+*Node.js y npm*
+
+*MySQL Server*
+
+*Git*
+
+*Clonar el Repositorio*
+
 **git clone https://github.com/davidbonilla1626-bot/proyecto-progra.git**
-**cd restaurante1-app**
+
+*cd restaurante1-app*
 
 
 
