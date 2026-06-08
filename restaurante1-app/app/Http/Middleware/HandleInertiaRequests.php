@@ -29,11 +29,27 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $openingTime = \App\Models\Setting::getVal('opening_time', '08:00');
+        $closingTime = \App\Models\Setting::getVal('closing_time', '22:00');
+        $currentTime = now()->format('H:i');
+        $isOpen = ($currentTime >= $openingTime && $currentTime <= $closingTime);
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'role' => $request->user()->role,
+                    'points' => $request->user()->points,
+                ] : null,
             ],
+            'shop' => [
+                'opening_time' => $openingTime,
+                'closing_time' => $closingTime,
+                'is_open' => $isOpen,
+            ]
         ];
     }
 }

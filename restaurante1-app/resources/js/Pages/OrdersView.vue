@@ -3,6 +3,7 @@ import { Head, router, usePage, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import PublicHeader from '@/Components/PublicHeader.vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { useCart } from '@/Composables/useCart';
 
 // Recibimos los datos del backend
 const props = defineProps({
@@ -13,10 +14,15 @@ const props = defineProps({
     isAdmin: {
         type: Boolean,
         default: false
+    },
+    isStaff: {
+        type: Boolean,
+        default: false
     }
 });
 
 const page = usePage();
+const { cartItems } = useCart();
 
 // Estado del Modal de Detalles del Pedido
 const selectedOrder = ref(null);
@@ -50,7 +56,7 @@ const formatDate = (dateStr) => {
     });
 };
 
-// Cambiar estado de pedidos (Solo Admin)
+// Cambiar estado de pedidos (Solo Staff/Admin)
 const updateOrderStatus = (orderId, newStatus) => {
     router.patch(route('orders.updateStatus', orderId), {
         status: newStatus
@@ -61,6 +67,65 @@ const updateOrderStatus = (orderId, newStatus) => {
             if (selectedOrder.value && selectedOrder.value.id === orderId) {
                 selectedOrder.value.status = newStatus;
             }
+        }
+    });
+};
+
+// Reordenar pedido anterior ("Volver a pedir")
+const reorder = (order) => {
+    let itemsAdded = 0;
+    const newItems = [];
+    
+    order.items.forEach(item => {
+        if (item.product) {
+            if (item.product.stock > 0) {
+                const qtyToAdd = Math.min(item.quantity, item.product.stock);
+                newItems.push({
+                    product: item.product,
+                    quantity: qtyToAdd
+                });
+                itemsAdded++;
+            }
+        }
+    });
+
+    if (itemsAdded === 0) {
+        alert('Lo sentimos, los productos de este pedido ya no se encuentran en stock.');
+        return;
+    }
+
+    cartItems.value = newItems;
+    router.visit(route('public.cart'));
+};
+
+// Sistema de Calificaciones (Formularios reactivos por pedido)
+const ratingsForm = ref({});
+props.orders.forEach(order => {
+    if (order.status === 'Entregado' && !order.rating) {
+        ratingsForm.value[order.id] = {
+            rating: 0,
+            comment: ''
+        };
+    }
+});
+
+const setRating = (orderId, stars) => {
+    if (!ratingsForm.value[orderId]) {
+        ratingsForm.value[orderId] = { rating: 0, comment: '' };
+    }
+    ratingsForm.value[orderId].rating = stars;
+};
+
+const submitRating = (orderId) => {
+    const data = ratingsForm.value[orderId];
+    if (!data || data.rating === 0) {
+        alert('Por favor selecciona una calificación de 1 a 5 estrellas.');
+        return;
+    }
+    router.post(route('orders.rate', orderId), data, {
+        preserveScroll: true,
+        onSuccess: () => {
+            // El backend actualiza la propiedad flash y refresca props
         }
     });
 };
@@ -95,7 +160,7 @@ const getStatusIcon = (status) => {
     }
 };
 
-// Resumen rápido de estados para el admin
+// Resumen rápido de estados para el admin/personal
 const pendingCount = computed(() => props.orders.filter(o => o.status === 'Pendiente').length);
 const preparingCount = computed(() => props.orders.filter(o => o.status === 'En preparación').length);
 const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo para entrega').length);
@@ -106,9 +171,9 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
     <Head title="Mis Pedidos | QuickBite Express" />
 
     <!-- ============================================== -->
-    <!-- 1. VISTA DEL ADMINISTRADOR                     -->
+    <!-- 1. VISTA DEL PERSONAL (ADMIN O COCINERO)       -->
     <!-- ============================================== -->
-    <AdminLayout v-if="isAdmin">
+    <AdminLayout v-if="isStaff">
         <Head title="Control de Pedidos | Panel Administrativo" />
         
         <div class="p-8 md:p-12 max-w-7xl mx-auto space-y-10">
@@ -178,7 +243,11 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
                             <tr v-for="order in orders" :key="order.id" class="hover:bg-yellow-50 transition-colors">
                                 
                                 <!-- ID -->
-                                <td class="px-6 py-4 font-black text-slate-900 font-['Epilogue']">{{ order.order_number || '#QB-' + order.id }}</td>
+                                <td class="px-6 py-4 font-black text-slate-900 font-['Epilogue']">
+                                    <Link :href="route('orders.tracking', order.order_number)" class="hover:underline text-red-700">
+                                        {{ order.order_number || '#QB-' + order.id }}
+                                    </Link>
+                                </td>
                                 
                                 <!-- Cliente -->
                                 <td class="px-6 py-4 text-slate-700">
@@ -208,10 +277,10 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
                                 </td>
                                 
                                 <!-- Acciones -->
-                                <td class="px-6 py-4 text-right">
+                                <td class="px-6 py-4 text-right space-x-2">
                                     <button 
                                         @click="openOrderDetails(order)"
-                                        class="bg-slate-900 text-white border-2 border-slate-900 hover:bg-slate-800 px-4 py-2 rounded-xl text-xs uppercase tracking-widest shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all font-black"
+                                        class="bg-slate-900 text-white border-2 border-slate-900 hover:bg-slate-800 px-3 py-1.5 rounded-xl text-xs uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all font-black"
                                     >
                                         VER PRODUCTOS
                                     </button>
@@ -234,6 +303,11 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
         <PublicHeader />
 
         <main class="max-w-4xl mx-auto px-6 mt-12 space-y-12">
+            
+            <!-- Messages flash -->
+            <div v-if="page.props.flash?.message" class="bg-emerald-100 border-2 border-slate-900 p-4 rounded-xl text-emerald-950 font-bold text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                {{ page.props.flash.message }}
+            </div>
             
             <!-- Encabezado de sección -->
             <header class="border-b-2 border-slate-200 pb-6">
@@ -275,13 +349,32 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
                                 <span class="text-xs font-black text-slate-400 uppercase tracking-widest">{{ formatDate(order.created_at) }}</span>
                             </div>
                             
-                            <!-- Badge de Estado -->
-                            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 border-slate-900 font-black text-xs uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                                 :class="getStatusBadgeClass(order.status)">
-                                <span class="material-symbols-outlined text-[15px] font-bold">
-                                    {{ getStatusIcon(order.status) }}
-                                </span>
-                                {{ order.status }}
+                            <!-- Acciones Rápidas del Ticket -->
+                            <div class="flex flex-wrap gap-2 items-center">
+                                <!-- Badge de Estado -->
+                                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 border-slate-900 font-black text-xs uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                     :class="getStatusBadgeClass(order.status)">
+                                    <span class="material-symbols-outlined text-[15px] font-bold">
+                                        {{ getStatusIcon(order.status) }}
+                                    </span>
+                                    {{ order.status }}
+                                </div>
+
+                                <!-- Botón Tracking -->
+                                <Link :href="route('orders.tracking', order.order_number)" class="inline-flex items-center gap-1.5 bg-slate-900 text-white px-3 py-1.5 rounded-lg border-2 border-slate-900 font-black text-[10px] uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all">
+                                    <span class="material-symbols-outlined text-[12px]">explore</span>
+                                    Rastrear
+                                </Link>
+
+                                <!-- Imprimir / Descargar Ticket -->
+                                <a :href="`/orders/${order.id}/ticket`" target="_blank" class="inline-flex items-center gap-1.5 bg-white text-slate-900 px-3 py-1.5 rounded-lg border-2 border-slate-900 font-black text-[10px] uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all">
+                                    <span class="material-symbols-outlined text-[12px]">print</span>
+                                    Ticket
+                                </a>
+                                <a :href="`/orders/${order.id}/ticket/pdf`" class="inline-flex items-center gap-1.5 bg-red-700 text-white px-3 py-1.5 rounded-lg border-2 border-slate-900 font-black text-[10px] uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all">
+                                    <span class="material-symbols-outlined text-[12px]">download</span>
+                                    PDF
+                                </a>
                             </div>
 
                             <!-- Resumen de items -->
@@ -298,23 +391,71 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
                                     </li>
                                 </ul>
                             </div>
+
+                            <!-- Calificaciones en el historial -->
+                            <div v-if="order.status === 'Entregado'" class="mt-4 pt-4 border-t border-slate-150">
+                                <div v-if="order.rating" class="bg-emerald-50 border-2 border-slate-900 rounded-xl p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                    <p class="text-[9px] font-black text-emerald-800 uppercase tracking-widest">Tu Calificación de Experiencia</p>
+                                    <div class="flex items-center gap-0.5 mt-1 text-amber-500">
+                                        <span v-for="star in 5" :key="star" class="material-symbols-outlined text-lg" :class="{ 'fill-current': star <= order.rating.rating }">
+                                            star
+                                        </span>
+                                    </div>
+                                    <p v-if="order.rating.comment" class="text-xs text-slate-600 mt-2 font-semibold italic">
+                                        "{{ order.rating.comment }}"
+                                    </p>
+                                </div>
+
+                                <div v-else class="bg-yellow-50 border-2 border-slate-900 rounded-xl p-4 space-y-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                    <p class="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-amber-500">star</span>
+                                        ¿Cómo estuvo tu comida? Califica la orden
+                                    </p>
+                                    
+                                    <div class="flex items-center gap-2">
+                                        <button v-for="star in 5" :key="star" type="button" @click="setRating(order.id, star)" class="text-slate-300 hover:text-amber-500 focus:outline-none transition-colors">
+                                            <span class="material-symbols-outlined text-2xl" :class="{ 'text-[#ffcc00] fill-current': star <= (ratingsForm[order.id]?.rating || 0) }">
+                                                star
+                                            </span>
+                                        </button>
+                                    </div>
+                                    
+                                    <textarea v-model="ratingsForm[order.id].comment" placeholder="Déjanos un comentario o sugerencia (opcional)..." class="w-full text-xs font-bold rounded-lg border-2 border-slate-900 focus:border-red-700 focus:ring-0 p-2.5 bg-white text-slate-900"></textarea>
+                                    
+                                    <button @click="submitRating(order.id)" class="w-full bg-[#ffcc00] text-slate-950 font-black py-2 rounded-lg text-[10px] uppercase tracking-widest border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer">
+                                        Enviar Calificación
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Bloque Derecho: Precio Total y Botón de Acción -->
+                        <!-- Bloque Derecho: Precio Total y Botones de Acción -->
                         <div class="flex flex-col items-start md:items-end justify-between border-t border-slate-200 md:border-t-0 pt-4 md:pt-0 shrink-0">
                             <div class="text-left md:text-right mb-4 md:mb-0">
                                 <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Total Pagado</p>
                                 <p class="text-3xl font-black text-red-700 font-['Epilogue']">{{ formatPrice(order.total) }}</p>
+                                <p v-if="order.discount > 0" class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1">
+                                    Descuento: -{{ formatPrice(order.discount) }}
+                                </p>
                             </div>
 
-                            <!-- Botón Ver Detalles completo -->
-                            <button 
-                                @click="openOrderDetails(order)"
-                                class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(239,68,68,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center gap-2 cursor-pointer"
-                            >
-                                <span class="material-symbols-outlined text-[16px]">info</span>
-                                VER DETALLES
-                            </button>
+                            <!-- Botones Accion: Detalles / Reordenar -->
+                            <div class="flex flex-col gap-2 w-full md:w-auto">
+                                <button 
+                                    @click="openOrderDetails(order)"
+                                    class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(239,68,68,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    <span class="material-symbols-outlined text-[16px]">info</span>
+                                    VER DETALLES
+                                </button>
+                                <button 
+                                    @click="reorder(order)"
+                                    class="bg-[#ffcc00] hover:bg-yellow-500 text-slate-950 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    <span class="material-symbols-outlined text-[16px]">replay</span>
+                                    VOLVER A PEDIR
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -323,7 +464,7 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
     </div>
 
     <!-- ============================================== -->
-    <!-- MODAL DETALLES DEL PEDIDO (CLIENTE Y ADMIN)    -->
+    <!-- MODAL DETALLES DEL PEDIDO (CLIENTE Y PERSONAL) -->
     <!-- ============================================== -->
     <div v-if="showDetailsModal && selectedOrder" class="fixed inset-0 bg-slate-950/80 flex items-center justify-center p-4 z-50 animate-fadeIn">
         <div class="bg-white border-4 border-slate-900 rounded-3xl p-6 md:p-8 max-w-xl w-full shadow-[8px_8px_0px_0px_rgba(255,204,0,1)] relative animate-scaleUp">
@@ -349,10 +490,13 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
                     <strong class="font-black text-slate-950">Cliente:</strong> {{ selectedOrder.user?.name || 'Cliente Registrado' }} ({{ selectedOrder.user?.email }})
                 </p>
                 <div class="text-xs font-bold text-slate-700 uppercase tracking-wide leading-relaxed">
-                    <strong class="font-black text-slate-950">Datos Adicionales / Dirección:</strong> 
+                    <strong class="font-black text-slate-950">Instrucciones y Dirección:</strong> 
                     <p class="text-slate-600 mt-1 lowercase font-medium bg-white p-2 border border-slate-200 rounded-lg first-letter:uppercase">
                         {{ selectedOrder.notes || 'No se ingresaron notas especiales.' }}
                     </p>
+                </div>
+                <div v-if="selectedOrder.promotion_code" class="text-xs font-bold text-emerald-800 uppercase tracking-wide">
+                    <strong class="font-black text-slate-950">Cupón Aplicado:</strong> {{ selectedOrder.promotion_code }} (-{{ formatPrice(selectedOrder.discount) }})
                 </div>
             </div>
 
@@ -376,17 +520,27 @@ const readyCount = computed(() => props.orders.filter(o => o.status === 'Listo p
             </div>
 
             <!-- Total y Cierre -->
-            <div class="border-t-2 border-slate-900 pt-6 mt-6 flex justify-between items-center">
+            <div class="border-t-2 border-slate-900 pt-6 mt-6 flex justify-between items-center flex-wrap gap-4">
                 <div>
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monto Total</p>
                     <p class="text-3xl font-black text-red-700 font-['Epilogue']">{{ formatPrice(selectedOrder.total) }}</p>
                 </div>
-                <button 
-                    @click="closeOrderDetails"
-                    class="bg-slate-950 hover:bg-slate-800 text-white font-black px-6 py-3 rounded-xl text-xs uppercase tracking-widest border-2 border-slate-950 shadow-[4px_4px_0px_0px_rgba(255,204,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all cursor-pointer"
-                >
-                    CERRAR
-                </button>
+                
+                <div class="flex gap-2">
+                    <button 
+                        v-if="!isStaff"
+                        @click="reorder(selectedOrder)"
+                        class="bg-[#ffcc00] hover:bg-yellow-500 text-slate-950 font-black px-4 py-3 rounded-xl text-xs uppercase tracking-widest border-2 border-slate-900 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+                    >
+                        Volver a pedir
+                    </button>
+                    <button 
+                        @click="closeOrderDetails"
+                        class="bg-slate-950 hover:bg-slate-800 text-white font-black px-5 py-3 rounded-xl text-xs uppercase tracking-widest border-2 border-slate-950 shadow-[3px_3px_0px_0px_rgba(255,204,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+                    >
+                        CERRAR
+                    </button>
+                </div>
             </div>
 
         </div>

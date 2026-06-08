@@ -80,7 +80,7 @@ class ProductController extends Controller
             $imagePath = $validated['image_url'];
         }
 
-        Product::create([
+        $product = Product::create([
             'name' => $validated['name'],
             'description' => $validated['description'],
             'price' => $validated['price'],
@@ -88,6 +88,8 @@ class ProductController extends Controller
             'category_id' => $validated['category_id'],
             'image' => $imagePath,
         ]);
+
+        \App\Models\AuditLog::log("Creó el producto: {$product->name} (Stock: {$product->stock}, Precio: \${$product->price})");
 
         return redirect()->route('products.index')->with('message', '¡Producto creado con éxito!');
     }
@@ -161,6 +163,8 @@ class ProductController extends Controller
             'image' => $imagePath,
         ]);
 
+        \App\Models\AuditLog::log("Editó el producto ID {$product->id}: {$product->name} (Stock: {$product->stock}, Precio: \${$product->price})");
+
         return redirect()->route('products.index')->with('message', '¡Producto actualizado con éxito!');
     }
 
@@ -179,7 +183,11 @@ class ProductController extends Controller
             Storage::disk('public')->delete($oldPath);
         }
 
+        $productName = $product->name;
+        $productId = $product->id;
         $product->delete();
+
+        \App\Models\AuditLog::log("Eliminó el producto ID {$productId}: {$productName}");
 
         return redirect()->route('products.index')->with('message', '¡Producto eliminado con éxito!');
     }

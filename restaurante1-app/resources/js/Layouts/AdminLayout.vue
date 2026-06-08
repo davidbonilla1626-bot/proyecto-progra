@@ -76,6 +76,14 @@ const getLinkClass = (routeName) => {
                 </Link>
                 
                 <Link 
+                    :href="route('kitchen.index')" 
+                    :class="getLinkClass('kitchen.index')"
+                >
+                    <span class="material-symbols-outlined text-[22px]">soup_kitchen</span>
+                    Flujo de Cocina
+                </Link>
+                
+                <Link 
                     :href="route('products.index')" 
                     :class="getLinkClass('products.index')"
                 >
@@ -89,6 +97,40 @@ const getLinkClass = (routeName) => {
                 >
                     <span class="material-symbols-outlined text-[22px]">category</span>
                     Categorías Menú
+                </Link>
+
+                <Link 
+                    :href="route('users.index')" 
+                    :class="getLinkClass('users.index')"
+                >
+                    <span class="material-symbols-outlined text-[22px]">group</span>
+                    Usuarios
+                </Link>
+
+                <Link 
+                    v-if="user?.role === 'admin'"
+                    :href="route('ranking.index')" 
+                    :class="getLinkClass('ranking.index')"
+                >
+                    <span class="material-symbols-outlined text-[22px]">workspace_premium</span>
+                    Top Clientes
+                </Link>
+
+                <Link 
+                    :href="route('chat.index')" 
+                    :class="getLinkClass('chat.index')"
+                >
+                    <span class="material-symbols-outlined text-[22px]">forum</span>
+                    Chat Soporte
+                </Link>
+
+                <Link 
+                    v-if="user?.role === 'admin'"
+                    :href="route('audit.index')" 
+                    :class="getLinkClass('audit.index')"
+                >
+                    <span class="material-symbols-outlined text-[22px]">history</span>
+                    Auditoría
                 </Link>
             </nav>
 

@@ -13,6 +13,8 @@ class Order extends Model
         'order_number',
         'status',
         'total',
+        'discount',
+        'promotion_code',
         'notes'
     ];
 
@@ -30,5 +32,21 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Relación: Un pedido puede tener una calificación.
+     */
+    public function rating()
+    {
+        return $this->hasOne(Rating::class);
+    }
+
+    /**
+     * Relación: Un pedido puede tener muchos mensajes de chat.
+     */
+    public function chatMessages(): HasMany
+    {
+        return $this->hasMany(ChatMessage::class);
     }
 }

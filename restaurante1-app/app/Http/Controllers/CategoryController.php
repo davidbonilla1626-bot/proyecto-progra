@@ -32,7 +32,9 @@ class CategoryController extends Controller
             'name.max' => 'El nombre no debe superar los 50 caracteres.'
         ]);
 
-        Category::create($validated);
+        $category = Category::create($validated);
+
+        \App\Models\AuditLog::log("Creó la categoría: {$category->name}");
 
         return redirect()->back()->with('message', 'Categoría creada con éxito.');
     }
@@ -66,7 +68,11 @@ class CategoryController extends Controller
             return redirect()->back()->with('error', 'No se puede eliminar la categoría porque tiene productos asociados.');
         }
 
+        $categoryName = $category->name;
+        $categoryId = $category->id;
         $category->delete();
+
+        \App\Models\AuditLog::log("Eliminó la categoría ID {$categoryId}: {$categoryName}");
 
         return redirect()->back()->with('message', 'Categoría eliminada con éxito.');
     }

@@ -39,9 +39,6 @@ class RegisteredUserController extends Controller
         ]);
 
         $role = 'user';
-        if ($request->filled('admin_key') && $request->admin_key === 'restaurante2026') {
-            $role = 'admin';
-        }
 
         $user = User::create([
             'name' => $validated['name'],
@@ -51,6 +48,26 @@ class RegisteredUserController extends Controller
         ]);
 
         event(new Registered($user));
+
+        // Registrar en Auditoría
+        \App\Models\AuditLog::create([
+            'user_id' => $user->id,
+            'action' => "Se registró un nuevo usuario: {$user->name} ({$user->email})",
+            'ip_address' => $request->ip()
+        ]);
+
+        // Enviar Correo de Bienvenida
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\QuickBiteMail(
+                '¡Bienvenido a QuickBite Express!',
+                $user->name,
+                "Tu cuenta ha sido creada exitosamente.\n\nYa puedes explorar nuestro menú de comida rápida brutalista, acumular puntos de fidelidad en cada compra y canjearlos por deliciosas recompensas gratis.",
+                url('/menu'),
+                'Ir al Menú'
+            ));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error enviando correo de registro: " . $e->getMessage());
+        }
 
         Auth::login($user);
 

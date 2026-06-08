@@ -23,7 +23,16 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'points',
     ];
+
+    /**
+     * Relationship: A user can have many point transactions.
+     */
+    public function pointTransactions()
+    {
+        return $this->hasMany(PointTransaction::class);
+    }
 
     /**
      * Check if user is an admin.
@@ -34,11 +43,35 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is an employee.
+     */
+    public function isEmployee(): bool
+    {
+        return $this->role === 'employee';
+    }
+
+    /**
+     * Check if user is admin or employee.
+     */
+    public function isStaff(): bool
+    {
+        return $this->isAdmin() || $this->isEmployee();
+    }
+
+    /**
      * Relationship: A user can have many orders.
      */
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Relationship: A user can have many ratings.
+     */
+    public function ratings()
+    {
+        return $this->hasMany(Rating::class);
     }
 
     /**

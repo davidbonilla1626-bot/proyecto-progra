@@ -42,6 +42,41 @@ const page = usePage();
                     Mis Pedidos
                 </Link>
                 <Link 
+                    v-if="$page.props.auth && $page.props.auth.user && $page.props.auth.user.role === 'user'"
+                    :href="route('rewards.index')" 
+                    :class="[
+                        'pb-1 transition-all border-b-2',
+                        route().current('rewards.index') 
+                            ? 'text-red-700 border-red-700' 
+                            : 'border-transparent hover:text-red-700 hover:border-slate-200'
+                    ]"
+                >
+                    Recompensas
+                </Link>
+                <Link 
+                    v-if="$page.props.auth && $page.props.auth.user"
+                    :href="route('chat.index')" 
+                    :class="[
+                        'pb-1 transition-all border-b-2',
+                        route().current('chat.index') 
+                            ? 'text-red-700 border-red-700' 
+                            : 'border-transparent hover:text-red-700 hover:border-slate-200'
+                    ]"
+                >
+                    Soporte
+                </Link>
+                <Link 
+                    :href="route('public.location')" 
+                    :class="[
+                        'pb-1 transition-all border-b-2',
+                        route().current('public.location') 
+                            ? 'text-red-700 border-red-700' 
+                            : 'border-transparent hover:text-red-700 hover:border-slate-200'
+                    ]"
+                >
+                    Ubicación
+                </Link>
+                <Link 
                     :href="route('public.about')" 
                     :class="[
                         'pb-1 transition-all border-b-2',
@@ -71,6 +106,16 @@ const page = usePage();
                 <!-- AUTENTICACIÓN / ACCESOS -->
                 <div class="flex items-center gap-3">
                     <div v-if="$page.props.auth && $page.props.auth.user" class="flex items-center gap-3">
+                        <!-- PUNTOS BADGE -->
+                        <Link 
+                            v-if="$page.props.auth.user.role === 'user'" 
+                            :href="route('rewards.index')" 
+                            class="flex items-center gap-1 bg-amber-400 text-slate-950 border-2 border-slate-900 px-2.5 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+                        >
+                            <span class="material-symbols-outlined text-sm font-bold">star</span>
+                            {{ $page.props.auth.user.points || 0 }} PTS
+                        </Link>
+
                         <span class="hidden lg:inline text-xs font-black uppercase text-slate-400">
                             ¡HOLA, {{ $page.props.auth.user.name.split(' ')[0] }}!
                         </span>
@@ -82,6 +127,15 @@ const page = usePage();
                             class="bg-[#ffcc00] text-slate-950 border-2 border-slate-900 px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
                         >
                             PANEL ADMIN
+                        </Link>
+
+                        <!-- Panel Cocina si es empleado o admin -->
+                        <Link 
+                            v-if="$page.props.auth.user.role === 'employee' || $page.props.auth.user.role === 'admin'" 
+                            :href="route('kitchen.index')" 
+                            class="bg-blue-500 text-white border-2 border-slate-900 px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+                        >
+                            PANEL COCINA
                         </Link>
                         
                         <!-- Botón de Cerrar Sesión -->

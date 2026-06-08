@@ -55,6 +55,65 @@ const filteredProducts = computed(() => {
 const formatPrice = (price) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
 };
+
+// --- ALGORITMO DE RECOMENDACIÓN IA SENCILLA ---
+const showAiRecommendation = ref(false);
+const currentProductForAi = ref(null);
+const recommendedProductForAi = ref(null);
+const aiMessage = ref('');
+
+const handleAddToCartWithAi = (product) => {
+    // 1. Agregar el producto principal al carrito
+    addToCart(product);
+    currentProductForAi.value = product;
+
+    // 2. Algoritmo de emparejamiento inteligente de categorías
+    const allProducts = props.products;
+    const currentCat = (typeof product.category === 'object' ? product.category?.name : product.category) || 'Hamburguesas';
+
+    let targetCategory = 'Bebidas';
+    if (currentCat === 'Bebidas') {
+        targetCategory = 'Hamburguesas';
+    } else if (currentCat === 'Acompañamientos') {
+        targetCategory = 'Bebidas';
+    } else {
+        targetCategory = 'Acompañamientos'; // hamburguesas o alitas sugieren papas/aros
+    }
+
+    // Filtrar candidatos disponibles con stock
+    let candidates = allProducts.filter(p => {
+        const pCat = (typeof p.category === 'object' ? p.category?.name : p.category) || '';
+        return pCat === targetCategory && p.id !== product.id && p.stock > 0;
+    });
+
+    // Fallback si no hay existencias en la categoría objetivo
+    if (candidates.length === 0) {
+        candidates = allProducts.filter(p => p.id !== product.id && p.stock > 0);
+    }
+
+    if (candidates.length > 0) {
+        // Elegir una recomendación aleatoria de los candidatos
+        const recommended = candidates[Math.floor(Math.random() * candidates.length)];
+        recommendedProductForAi.value = recommended;
+
+        // Mensajes ingeniosos de nuestro bot de IA
+        const phrases = [
+            `🤖 [BITE-BOT IA]: ¡Gran elección! Mi algoritmo predice que acompañar tu "${product.name}" con unas deliciosas "${recommended.name}" aumentará tu nivel de felicidad culinaria en un 97.2%.`,
+            `🤖 [SABOR E INTELIGENCIA]: Has añadido "${product.name}". Para lograr el equilibrio perfecto de sabores y carbohidratos, te sugiero complementarlo con "${recommended.name}".`,
+            `🤖 [RECOMENDACIÓN INSTANTÁNEA]: Detectamos que tienes hambre de "${product.name}". Te falta el combo perfecto: añade "${recommended.name}" por solo ${formatPrice(recommended.price)}.`
+        ];
+        
+        aiMessage.value = phrases[Math.floor(Math.random() * phrases.length)];
+        showAiRecommendation.value = true;
+    }
+};
+
+const addAiRecommendationToCart = () => {
+    if (recommendedProductForAi.value) {
+        addToCart(recommendedProductForAi.value);
+    }
+    showAiRecommendation.value = false;
+};
 </script>
 
 <template>
@@ -125,7 +184,7 @@ const formatPrice = (price) => {
                             <div v-if="product.stock === 0" class="absolute top-4 right-4 bg-red-700 border-2 border-slate-900 px-3 py-1.5 text-[9px] font-black uppercase text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] z-10">
                                 AGOTADO
                             </div>
-                            <div v-else-if="product.stock <= 3" class="absolute top-4 right-4 bg-yellow-400 border-2 border-slate-900 px-3 py-1.5 text-[9px] font-black uppercase text-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1 z-10">
+                            <div v-else-if="product.stock <= 5" class="absolute top-4 right-4 bg-yellow-400 border-2 border-slate-900 px-3 py-1.5 text-[9px] font-black uppercase text-slate-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1 z-10">
                                 <span class="material-symbols-outlined text-[12px] font-bold">warning</span>
                                 ¡POCO STOCK! ({{ product.stock }})
                             </div>
@@ -144,7 +203,7 @@ const formatPrice = (price) => {
                                 
                                 <!-- Botón Agregar al Carrito -->
                                 <button 
-                                    @click="addToCart(product)"
+                                    @click="handleAddToCartWithAi(product)"
                                     :disabled="product.stock <= 0"
                                     :class="[
                                         'px-4 py-2.5 rounded-xl border-2 border-slate-900 font-black text-xs uppercase transition-all flex items-center gap-1.5 cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]',
@@ -191,6 +250,57 @@ const formatPrice = (price) => {
                 <!-- Fondo decorativo al hacer hover -->
                 <div class="absolute inset-0 bg-red-800 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </Link>
+        </div>
+
+        <!-- MODAL DE RECOMENDACIÓN CON IA -->
+        <div v-if="showAiRecommendation && recommendedProductForAi" class="fixed inset-0 bg-slate-950/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm pointer-events-auto">
+            <div class="bg-white border-4 border-slate-900 rounded-3xl p-6 max-w-md w-full shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] animate-scaleUp space-y-6">
+                <!-- CABECERA DEL BOT -->
+                <div class="bg-[#ffcc00] border-2 border-slate-900 rounded-xl p-3 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-[24px] text-slate-950 font-bold">smart_toy</span>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-wider text-slate-700">QuickBite IA System</p>
+                        <p class="text-[12px] font-black text-slate-950">Asistente de Combinación</p>
+                    </div>
+                </div>
+
+                <!-- MENSAJE DE IA -->
+                <p class="text-xs text-slate-700 font-bold leading-relaxed bg-slate-50 border-2 border-slate-200 p-3.5 rounded-xl">
+                    {{ aiMessage }}
+                </p>
+
+                <!-- CARD DE PRODUCTO RECOMENDADO -->
+                <div class="border-2 border-slate-900 rounded-2xl p-3 flex gap-4 bg-slate-50/50">
+                    <img 
+                        :src="recommendedProductForAi.image || recommendedProductForAi.image_path" 
+                        :alt="recommendedProductForAi.name" 
+                        class="w-16 h-16 object-cover rounded-xl border-2 border-slate-900 shrink-0" 
+                    />
+                    <div class="min-w-0 flex-grow">
+                        <p class="font-black text-slate-900 text-xs truncate">{{ recommendedProductForAi.name }}</p>
+                        <p class="text-[9px] font-black text-slate-400 uppercase mt-0.5">Complemento Sugerido</p>
+                        <p class="text-red-700 font-black text-xs mt-1.5 font-['Epilogue']">
+                            {{ formatPrice(recommendedProductForAi.price) }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- BOTONES DE ACCION -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button 
+                        @click="addAiRecommendationToCart"
+                        class="bg-[#ffcc00] hover:bg-yellow-500 text-slate-950 font-black border-2 border-slate-900 rounded-xl px-4 py-3 text-xs uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all w-full text-center cursor-pointer"
+                    >
+                        Añadir Combo 🚀
+                    </button>
+                    <button 
+                        @click="showAiRecommendation = false"
+                        class="bg-white hover:bg-slate-50 text-slate-500 font-bold border-2 border-slate-200 rounded-xl px-4 py-3 text-xs uppercase transition-all w-full text-center cursor-pointer"
+                    >
+                        No, gracias
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </template>
