@@ -117,6 +117,9 @@ Crear el enlace simbólico para el almacenamiento de imágenes:
 
 Iniciar el servidor de Laravel:
 
+*php artisan serve*
+
+Compilar los recursos del frontend:
 
 
 
