@@ -28,6 +28,25 @@
 **QuickBite busca ofrecer una solución tecnológica accesible que mejore la experiencia de los clientes y facilite la administración interna de los pedidos dentro de un restaurante mediante una plataforma web moderna y escalable.**
 
 
+
+# Instalación del Proyecto
+
+*Requisitos Previos*
+
+*Antes de ejecutar el proyecto, asegúrese de tener instalados los siguientes componentes:*
+
+**PHP 8.2 o superior**
+**Composer**
+**Node.js y npm**
+**MySQL Server**
+**Git**
+**Clonar el Repositorio**
+**git clone https://github.com/davidbonilla1626-bot/proyecto-progra.git**
+**cd restaurante1-app**
+
+
+
+
 <p align="center">
     <img src="https://raw.githubusercontent.com/davidbonilla1626-bot/proyecto-progra/main/restaurante1-app/public/images/quickbite1.png" width="150">
   </p>
