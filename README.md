@@ -58,3 +58,37 @@
 <p align="center">
     <img src="https://raw.githubusercontent.com/davidbonilla1626-bot/proyecto-progra/main/restaurante1-app/public/images/quickbite1.png" width="150">
   </p>
+
+# Instalación de Dependencias
+
+Instalar las dependencias de PHP:
+
+*composer install*
+
+Instalar las dependencias de JavaScript:
+
+*npm install*
+
+Configuración del Entorno
+
+*Crear una copia del archivo de configuración:*
+
+*cp .env.example .env*
+
+*Generar la clave de la aplicación:*
+
+*php artisan key:generate*
+
+# Configurar los parámetros de conexión a la base de datos en el archivo .env:*
+
+*DB_CONNECTION=mysql*
+
+*DB_HOST=127.0.0.1*
+
+*DB_PORT=3306*
+
+*DB_DATABASE=restaurante1_db*
+
+*DB_USERNAME=usuario*
+
+*DB_PASSWORD=contraseña*
